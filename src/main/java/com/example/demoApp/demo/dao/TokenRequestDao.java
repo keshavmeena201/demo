@@ -1,14 +1,13 @@
 package com.example.demoApp.demo.dao;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.*;
 
 @ToString
 @Getter
 @Setter
-@Builder
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TokenRequestDao {
 
     private String phoneNumber;

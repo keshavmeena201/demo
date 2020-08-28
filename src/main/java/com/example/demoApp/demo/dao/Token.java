@@ -1,9 +1,7 @@
 package com.example.demoApp.demo.dao;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,9 +9,10 @@ import javax.persistence.Id;
 
 @Getter
 @Setter
-@Builder
 @ToString
 @Entity
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Token {
 
     @Id
