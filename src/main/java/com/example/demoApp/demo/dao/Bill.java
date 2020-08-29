@@ -6,7 +6,6 @@ import java.util.Date;
 
 public class Bill {
 
-
     private String fromMobileNumber;
     private String toMobileNumber;
     private Date transactionDate;

@@ -78,6 +78,7 @@ public class AuthController {
         token.setMobileNo("9106729587");
         token.setToken("d03c1bb6-7b73-4bae-aedf-0d371eec02cc");
         tokenRepository.save(token);
+        //http://localhost:8080/h2-console/
     }
 
     public static void main(String[] args) {
