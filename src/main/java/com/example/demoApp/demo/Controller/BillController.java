@@ -40,6 +40,7 @@ public class BillController {
     public ResponseEntity update(@RequestBody Bill bill) {
         Optional<Bill> bills = billRepositories.findById(bill.getId());
         billRepositories.save(bills.get());
+        //call update credit
         return ResponseEntity.ok("Updated");
     }
 }
