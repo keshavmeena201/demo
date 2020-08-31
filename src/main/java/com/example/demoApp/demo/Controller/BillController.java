@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,12 +19,13 @@ public class BillController {
     @PostMapping(path = "/addBill", consumes = "application/json")
     public ResponseEntity addBill(@RequestBody Bill bill) {
         //to do : add validation
+        bill.setTransactionDate(new Date());
         billRepositories.save(bill);
-        return ResponseEntity.ok("");
+        return ResponseEntity.ok("Saved");
     }
 
     @GetMapping(path = "/getfromBill/{frommobileNumber}")
-    public List<Bill> getBill(@RequestParam String frommobileNumber) {
+    public List<Bill> getfromBill(@RequestParam String frommobileNumber) {
         List<Bill> bills = billRepositories.findByFromMobileNumber(frommobileNumber);
         return bills;
     }
@@ -32,5 +34,12 @@ public class BillController {
     public List<Bill> getToBill(@RequestParam String toMobileNumber) {
         List<Bill> bills = billRepositories.findByToMobileNumber(toMobileNumber);
         return bills;
+    }
+
+    @PostMapping(value = "/update", consumes = "application/json")
+    public ResponseEntity update(@RequestBody Bill bill) {
+        Optional<Bill> bills = billRepositories.findById(bill.getId());
+        billRepositories.save(bills.get());
+        return ResponseEntity.ok("Updated");
     }
 }

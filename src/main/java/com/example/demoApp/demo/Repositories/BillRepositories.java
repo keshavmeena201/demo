@@ -8,4 +8,5 @@ import java.util.List;
 public interface BillRepositories extends CrudRepository<Bill, Long> {
     List<Bill> findByFromMobileNumber(String fromMobileNumber);
     List<Bill> findByToMobileNumber(String toMobileNumber);
+    List<Bill> findByToMobileNumberAndFromMobileNumber(String toMobileNumber, String fromMobileNumber);
 }
