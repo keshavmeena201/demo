@@ -1,25 +1,30 @@
 package com.example.demoApp.demo.Controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.demoApp.demo.dao.Bill;
+import com.example.demoApp.demo.dao.Token;
+import com.example.demoApp.demo.dao.TokenRequestDao;
+import com.example.demoApp.demo.Repositories.BillRepositories;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
 
 import java.lang.Math;
+import java.util.concurrent.TimeUnit;
+
 
 @RestController
 public class BillUpdate {
-    // get bill data .
-    private String fromMobileNumber;
-    private String toMobileNumber;
-    private Date transactionDate;
-    private int PrincipleAmount;
-    private boolean isSettled;
-    private boolean isPartial;
-    private Date nextDate;
+
+    @Autowired
+    private BillRepositories billRepo;
+
+    public static long getDifferenceDays(Date d1, Date d2) {
+        long diff = d2.getTime() - d1.getTime();
+        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+    }
 
     Integer getAmount (Integer amount) {
         if(amount <=30000) {
@@ -37,7 +42,7 @@ public class BillUpdate {
         return 500000;
     }
 
-    double getCreditChange (Integer creditChange, Integer currentCreditScore, Integer txnNo) {
+    double getCreditChange (Integer creditChange, Integer currentCreditScore, Integer transactionNumber) {
         if (currentCreditScore < 700) {
             return creditChange;
         }
@@ -48,29 +53,29 @@ public class BillUpdate {
             return creditChange/9.0;
         }
         if (currentCreditScore < 850) {
-            return Math.pow(0.33,txnNo) * creditChange/27;
+            return Math.pow(0.33,transactionNumber) * creditChange/27;
         }
         return 0;
     }
 
-    void paidDueDate () {
-        Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();;
+    void paidDueDate (Bill bill) {
+        Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();
         scoreTable.put(0,5);
         scoreTable.put(30000,10);
         scoreTable.put(50000,20);
         scoreTable.put(100000,30);
         scoreTable.put(500000,50);
 
-        Integer currentCreditScore = 600;
-        Integer txnNo = 2;
+        Integer currentCreditScore = 600; // need to have the column in individual profile table
 
-        Integer normalizedAmount = getAmount(PrincipleAmount);
+        Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
-        Integer normalizedChange = (int)Math.floor(getCreditChange(creditChange, currentCreditScore, txnNo));
-        // update the db.
+        Integer normalizedChange = (int)Math.floor(getCreditChange(creditChange, currentCreditScore, bill.getTransactionNumber()));
+
+        // update db by creditScore + normalizedChange
     }
 
-    double getCreditChange2 (Integer creditChange, Integer normalizedAmount, Integer diffDate) {
+    double getCreditChange2 (Integer creditChange, Integer normalizedAmount, Long diffDate) {
         if (diffDate < 10) {
             if (normalizedAmount == 0) {
                 return creditChange + creditChange*0.2;
@@ -125,7 +130,7 @@ public class BillUpdate {
         return 0;
     }
 
-    void paidPostDueDate () {
+    void paidPostDueDate(Bill bill) {
         Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();;
         scoreTable.put(0,-50);
         scoreTable.put(30000,-30);
@@ -133,24 +138,24 @@ public class BillUpdate {
         scoreTable.put(100000,-35);
         scoreTable.put(500000,-50);
 
-        Integer currentCreditScore = 600;
-        Integer diffDate = 2;
+        Integer currentCreditScore = 600; // get from db with a separate table
+        Long diffDate = getDifferenceDays(bill.getTransactionDate(), bill.getTransactionDueDate());
 
-        Integer normalizedAmount = getAmount(PrincipleAmount);
+        Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
         Integer normalizedChange = (int)Math.floor(getCreditChange2(creditChange, normalizedAmount, diffDate));
-        // update db
+        // update db by creditScore + normalizedChange
     }
 
-    double getCreditChange3 (Integer creditChange, int txnNo, double oldRatio, double newRatio) {
-        if(txnNo == 1) {
+    double getCreditChange3 (Integer creditChange, int transactionNumber, double oldRatio, double newRatio) {
+        if(transactionNumber == 1) {
             return creditChange * (oldRatio) * (1-oldRatio);
         }
         else {
             return creditChange * (oldRatio) * (1-oldRatio) * (newRatio);
         }
     }
-    void paidPartial () {
+    void paidPartial(Bill bill) {
         Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();;
         scoreTable.put(0,-50);
         scoreTable.put(30000,-30);
@@ -159,25 +164,58 @@ public class BillUpdate {
         scoreTable.put(500000,-50);
 
         Integer currentCreditScore = 600;
-        Integer txnNo = 5;
-        double oldRatio = 0.2;
-        double newRatio = 0.5;
-
-        Integer normalizedAmount = getAmount(PrincipleAmount);
+        double newRatio = 1.0*bill.getAmountPaid()/bill.getPrincipleAmount();
+        if(bill.getTransactionNumber() == 0) {
+            bill.setOldRatio(newRatio);
+        }
+        Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
-        Integer normalizedChange = (int)Math.floor(getCreditChange3(creditChange, txnNo, oldRatio, newRatio));
-        // update db
+        Integer normalizedChange = (int)Math.floor(getCreditChange3(creditChange, bill.getTransactionNumber(), bill.getOldRatio(), newRatio));
+        // update db by creditScore + normalizedChange
     }
 
-    void callUpdate(boolean isSettled, boolean isPartial) {
-        if (isSettled) {
-            paidDueDate();
+    void callUpdate(Bill bill) {
+        if (bill.isSettled() && bill.getTransactionDate() == bill.getTransactionDueDate()) {
+            paidDueDate(bill);
         }
-        if (!isSettled) {
-            paidPostDueDate();
+        if (bill.isSettled() && bill.getTransactionDate() != bill.getTransactionDueDate()) {
+            paidPostDueDate(bill);
         }
-        if (isPartial) {
-            paidPartial();
+        if (bill.isPartial()) {
+            paidPartial(bill);
         }
+    }
+    @PostMapping (path = "/updateBill", consumes = "application/json")
+    public ResponseEntity updateBillData (@RequestBody Bill billData) {
+        billRepo.save(billData);
+        callUpdate(billData);
+        return ResponseEntity.ok("updated Bill");
+    }
+    @GetMapping (value="/getAllBills")
+    public ResponseEntity getAllBills() {
+        List<Bill> allBill = (List<Bill>) billRepo.findAll();
+        return ResponseEntity.ok(allBill);
+    }
+    @GetMapping (value="/getBillData/{transactionId}")
+    public ResponseEntity getBill(@PathVariable String transactionId) {
+        Optional<Bill> singleBill = billRepo.findById(transactionId);
+        return  ResponseEntity.ok(singleBill);
+    }
+    @PostMapping (path = "/refreshScore/{transactionId}")
+    public ResponseEntity RefreshScore (@PathVariable String transactionId) {
+        Optional<Bill> singleBill = billRepo.findById(transactionId);
+        callUpdate(singleBill.get());
+        return ResponseEntity.ok(singleBill);
+    }
+
+    // post request for adding next payment linked to previous one.
+    @PostMapping (path = "/addNextPayment/{previousTransactionId}", consumes = "application/json")
+    public ResponseEntity addNextPayment(@RequestBody Bill billData, @PathVariable String previousTransactionId) {
+        billData.setPreviousTransactionId(previousTransactionId);
+        Optional<Bill> previousBill = billRepo.findById(previousTransactionId);
+        billData.setTransactionNumber(previousBill.get().getTransactionNumber()+1);
+        billRepo.save(billData);
+        callUpdate(billData);
+        return ResponseEntity.ok("Payment Added");
     }
 }

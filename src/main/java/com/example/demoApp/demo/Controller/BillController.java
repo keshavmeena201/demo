@@ -36,10 +36,10 @@ public class BillController {
         return bills;
     }
 
-    @PostMapping(value = "/update", consumes = "application/json")
-    public ResponseEntity update(@RequestBody Bill bill) {
-        Optional<Bill> bills = billRepositories.findById(bill.getId());
-        billRepositories.save(bills.get());
-        return ResponseEntity.ok("Updated");
-    }
+//    @PostMapping(value = "/update", consumes = "application/json")
+//    public ResponseEntity update(@RequestBody Bill bill) {
+//        Optional<Bill> bills = billRepositories.findById(bill.getTr());
+//        billRepositories.save(bills.get());
+//        return ResponseEntity.ok("Updated");
+//    }
 }
