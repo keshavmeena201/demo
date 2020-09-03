@@ -9,22 +9,24 @@ import java.util.Date;
 @Entity
 @Getter
 @Setter
-@IdClass(CompositeKey.class)
+//@IdClass(CompositeKey.class)
 public class Bill {
     @Id
-    private Long id;
-    @Id
+    private String transactionId;
+
     private String fromMobileNumber;
-    @Id
     private String toMobileNumber;
+    private Date transactionDueDate;
     private Date transactionDate;
-    private int PrincipleAmount;
+    private int principleAmount;
     private boolean isSettled;
     private boolean isPartial;
     private Date nextDate;
     private String picUrl;
-    private int amountpaid;
-    private float oldratio;
+    private int amountPaid;
+    private double oldRatio;
+    private boolean scoreUpdated;
     private int transactionNumber;
+    private String previousTransactionId;
 
 }

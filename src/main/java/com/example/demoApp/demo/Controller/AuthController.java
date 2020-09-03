@@ -8,7 +8,6 @@ import com.example.demoApp.demo.dao.TokenRequestDao;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import com.sun.deploy.net.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
