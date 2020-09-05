@@ -13,7 +13,7 @@ public class Profile {
     @Id
     private String mobileNumber;
     private String orgName;
-    private int creditScore;
+    private double creditScore;
     private int amountToGive;
     private int amountToPay;
 }

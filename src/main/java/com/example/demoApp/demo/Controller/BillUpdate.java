@@ -1,8 +1,8 @@
 package com.example.demoApp.demo.Controller;
 
+import com.example.demoApp.demo.Repositories.ProfileRepository;
 import com.example.demoApp.demo.dao.Bill;
-import com.example.demoApp.demo.dao.Token;
-import com.example.demoApp.demo.dao.TokenRequestDao;
+import com.example.demoApp.demo.dao.Profile;
 import com.example.demoApp.demo.Repositories.BillRepositories;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +20,17 @@ public class BillUpdate {
 
     @Autowired
     private BillRepositories billRepo;
+    @Autowired
+    private ProfileRepository profileRepo;
+
+    public double updateScore (String mobileNumber, double scoreChange) {
+//        System.out.print(mobileNumber);
+        Optional<Profile> currentProfile = profileRepo.findById(mobileNumber);
+        double currentScore = currentProfile.get().getCreditScore();
+        currentProfile.get().setCreditScore(currentScore + scoreChange);
+        profileRepo.save(currentProfile.get());
+        return currentScore + scoreChange;
+    }
 
     public static long getDifferenceDays(Date d1, Date d2) {
         long diff = d2.getTime() - d1.getTime();
@@ -58,7 +69,7 @@ public class BillUpdate {
         return 0;
     }
 
-    void paidDueDate (Bill bill) {
+    double paidDueDate (Bill bill) {
         Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();
         scoreTable.put(0,5);
         scoreTable.put(30000,10);
@@ -66,71 +77,72 @@ public class BillUpdate {
         scoreTable.put(100000,30);
         scoreTable.put(500000,50);
 
-        Integer currentCreditScore = 600; // need to have the column in individual profile table
+        double currentCreditScore = profileRepo.findById(bill.getFromMobileNumber()).get().getCreditScore(); // need to have the column in individual profile table
 
         Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
-        Integer normalizedChange = (int)Math.floor(getCreditChange(creditChange, currentCreditScore, bill.getTransactionNumber()));
+        double normalizedChange = (getCreditChange(creditChange, (int) currentCreditScore, bill.getTransactionNumber()));
 
+        return updateScore(bill.getFromMobileNumber(), normalizedChange);
         // update db by creditScore + normalizedChange
     }
 
     double getCreditChange2 (Integer creditChange, Integer normalizedAmount, Long diffDate) {
         if (diffDate < 10) {
             if (normalizedAmount == 0) {
-                return creditChange + creditChange*0.2;
+                return creditChange - creditChange*0.2;
             }
             if (normalizedAmount == 30000) {
-                return creditChange + creditChange*0.2;
+                return creditChange - creditChange*0.2;
             }
             if (normalizedAmount == 50000) {
-                return creditChange + creditChange*0.3;
+                return creditChange - creditChange*0.3;
             }
             if (normalizedAmount == 100000) {
-                return creditChange + creditChange*0.4;
+                return creditChange - creditChange*0.4;
             }
             if (normalizedAmount == 500000) {
-                return creditChange + creditChange*0.5;
+                return creditChange - creditChange*0.5;
             }
         }
         if (diffDate < 20) {
             if (normalizedAmount == 0) {
-                return creditChange + creditChange*0.1;
+                return creditChange - creditChange*0.1;
             }
             if (normalizedAmount == 30000) {
-                return creditChange + creditChange*0.2;
+                return creditChange - creditChange*0.2;
             }
             if (normalizedAmount == 50000) {
-                return creditChange + creditChange*0.3;
+                return creditChange - creditChange*0.3;
             }
             if (normalizedAmount == 100000) {
-                return creditChange + creditChange*0.3;
+                return creditChange - creditChange*0.3;
             }
             if (normalizedAmount == 500000) {
-                return creditChange + creditChange*0.4;
+                return creditChange - creditChange*0.4;
             }
         }
         if (diffDate < 30) {
             if (normalizedAmount == 0) {
-                return creditChange + creditChange*0.05;
+                return creditChange - creditChange*0.05;
             }
             if (normalizedAmount == 30000) {
-                return creditChange + creditChange*0.1;
+                return creditChange - creditChange*0.1;
             }
             if (normalizedAmount == 50000) {
-                return creditChange + creditChange*0.2;
+                return creditChange - creditChange*0.2;
             }
             if (normalizedAmount == 100000) {
-                return creditChange + creditChange*0.2;
+                return creditChange - creditChange*0.2;
             }
             if (normalizedAmount == 500000) {
-                return creditChange + creditChange*0.3;
+                return creditChange - creditChange*0.3;
             }
         }
         return 0;
     }
 
-    void paidPostDueDate(Bill bill) {
+    double paidPostDueDate(Bill bill) {
         Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();;
         scoreTable.put(0,-50);
         scoreTable.put(30000,-30);
@@ -138,58 +150,73 @@ public class BillUpdate {
         scoreTable.put(100000,-35);
         scoreTable.put(500000,-50);
 
-        Integer currentCreditScore = 600; // get from db with a separate table
+        double currentCreditScore = profileRepo.findById(bill.getFromMobileNumber()).get().getCreditScore(); // get from db with a separate table
         Long diffDate = getDifferenceDays(bill.getTransactionDate(), bill.getTransactionDueDate());
 
         Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
-        Integer normalizedChange = (int)Math.floor(getCreditChange2(creditChange, normalizedAmount, diffDate));
-        // update db by creditScore + normalizedChange
+        double normalizedChange = (getCreditChange2(creditChange, normalizedAmount, diffDate));
+
+        return updateScore(bill.getFromMobileNumber(), normalizedChange);
     }
 
-    double getCreditChange3 (Integer creditChange, int transactionNumber, double oldRatio, double newRatio) {
-        if(transactionNumber == 1) {
-            return creditChange * (oldRatio) * (1-oldRatio);
+    double getCreditChange3 (Integer creditChange, int transactionNumber, double oldRatio, double newRatio, boolean isSettled) {
+        if(transactionNumber == 0) {
+            return creditChange*oldRatio;
         }
-        else {
+        else if (transactionNumber == 1 && isSettled) {
             return creditChange * (oldRatio) * (1-oldRatio) * (newRatio);
         }
+        else {
+            return creditChange*Math.pow(oldRatio,transactionNumber)*(1-oldRatio)*newRatio;
+        }
     }
-    void paidPartial(Bill bill) {
+    double paidPartial(Bill bill) {
         Map<Integer,Integer> scoreTable = new HashMap<Integer, Integer>();;
-        scoreTable.put(0,-50);
-        scoreTable.put(30000,-30);
-        scoreTable.put(50000,-25);
-        scoreTable.put(100000,-35);
-        scoreTable.put(500000,-50);
+        scoreTable.put(0,5);
+        scoreTable.put(30000,10);
+        scoreTable.put(50000,20);
+        scoreTable.put(100000,30);
+        scoreTable.put(500000,50);
 
-        Integer currentCreditScore = 600;
+        double currentCreditScore = profileRepo.findById(bill.getFromMobileNumber()).get().getCreditScore();
         double newRatio = 1.0*bill.getAmountPaid()/bill.getPrincipleAmount();
         if(bill.getTransactionNumber() == 0) {
             bill.setOldRatio(newRatio);
+            billRepo.save(bill);
         }
         Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
-        Integer normalizedChange = (int)Math.floor(getCreditChange3(creditChange, bill.getTransactionNumber(), bill.getOldRatio(), newRatio));
+        double normalizedChange;
+        normalizedChange = (getCreditChange3(creditChange, bill.getTransactionNumber(), bill.getOldRatio(), newRatio, bill.isSettled()));
+        System.out.print(normalizedChange);
+        return updateScore(bill.getFromMobileNumber(), normalizedChange);
         // update db by creditScore + normalizedChange
     }
 
-    void callUpdate(Bill bill) {
-        if (bill.isSettled() && bill.getTransactionDate() == bill.getTransactionDueDate()) {
-            paidDueDate(bill);
+    double callUpdate(Bill bill) {
+//        System.out.print("yes");
+        int checkDate = bill.getTransactionDueDate().compareTo(bill.getTransactionDate());
+//        System.out.print(bill.isSettled());
+        if (bill.isSettled() && checkDate == 0) {
+            System.out.print("no");
+            return paidDueDate(bill);
         }
-        if (bill.isSettled() && bill.getTransactionDate() != bill.getTransactionDueDate()) {
-            paidPostDueDate(bill);
+        else if (bill.isSettled() && bill.getTransactionDate() != bill.getTransactionDueDate()) {
+            System.out.print("yesno");
+            return paidPostDueDate(bill);
         }
-        if (bill.isPartial()) {
-            paidPartial(bill);
+        else if (bill.isPartial()) {
+            return paidPartial(bill);
         }
+        return 0;
     }
     @PostMapping (path = "/updateBill", consumes = "application/json")
     public ResponseEntity updateBillData (@RequestBody Bill billData) {
+//        System.out.print(billData);
         billRepo.save(billData);
-        callUpdate(billData);
-        return ResponseEntity.ok("updated Bill");
+        double finalScore = callUpdate(billData);
+        return ResponseEntity.ok(finalScore);
     }
     @GetMapping (value="/getAllBills")
     public ResponseEntity getAllBills() {
@@ -214,8 +241,16 @@ public class BillUpdate {
         billData.setPreviousTransactionId(previousTransactionId);
         Optional<Bill> previousBill = billRepo.findById(previousTransactionId);
         billData.setTransactionNumber(previousBill.get().getTransactionNumber()+1);
+        previousBill.get().setSettled(true); // because new bill will be created with unsettled option. So old bill should be discarded
+        billData.setOldRatio(previousBill.get().getOldRatio());
+        billData.setPrincipleAmount(previousBill.get().getPrincipleAmount()-billData.getAmountPaid());
         billRepo.save(billData);
         callUpdate(billData);
         return ResponseEntity.ok("Payment Added");
     }
+
+//    @GetMapping (value = "getUnsettledBills/{mobileNumber}")
+//    public List<Bill> getUnsettledBills(@PathVariable String mobileNumber) {
+//        return billRepo.findByUnSettled(mobileNumber);
+//    }
 }
