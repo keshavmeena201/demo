@@ -21,7 +21,7 @@ public class Bill {
     private int principleAmount;
     private boolean isSettled;
     private boolean isPartial;
-    private Date nextDate;
+    private String nextDate;
     private String picUrl;
     private int amountPaid;
     private double oldRatio;

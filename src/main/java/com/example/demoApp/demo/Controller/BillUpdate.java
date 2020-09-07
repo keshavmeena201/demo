@@ -215,8 +215,8 @@ public class BillUpdate {
     public ResponseEntity updateBillData (@RequestBody Bill billData) {
 //        System.out.print(billData);
         billRepo.save(billData);
-        double finalScore = callUpdate(billData);
-        return ResponseEntity.ok(finalScore);
+        //double finalScore = callUpdate(billData);
+        return ResponseEntity.ok("finalScore");
     }
     @GetMapping (value="/getAllBills")
     public ResponseEntity getAllBills() {
