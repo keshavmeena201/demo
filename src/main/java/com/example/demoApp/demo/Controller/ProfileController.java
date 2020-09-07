@@ -17,11 +17,21 @@ public class ProfileController {
 
     @PostMapping(value = "/profileUpdate", consumes = "application/json")
     public ResponseEntity profileUpdate(@RequestBody Profile profile) {
-        profileRepository.save(profile);
+        Optional<Profile> profile1 = profileRepository.findById(profile.getMobileNumber());
+        if(profile1.isPresent()){
+            profile1.get().setOrgName(profile.getOrgName());
+            profileRepository.save(profile1.get());
+        }else {
+            profile.setCreditScore(600);
+            profile.setAmountToGive(0);
+            profile.setAmountToPay(0);
+            profileRepository.save(profile);
+        }
+
         return ResponseEntity.ok("{added a new profile}");
     }
 
-    @GetMapping(value = "/profileUpdate/{mobileNum}", consumes = "application/json")
+    @GetMapping(value = "/getProfile/{mobileNum}", consumes = "application/json")
     public Profile profileUpdate(@PathVariable String mobileNum) {
         return profileRepository.findById(mobileNum).get();
     }
