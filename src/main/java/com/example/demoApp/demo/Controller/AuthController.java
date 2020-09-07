@@ -22,7 +22,7 @@ public class AuthController {
 
     public static String otpUrl = "https://2factor.in/API/V1/%s/SMS/+91%s/AUTOGEN";
     public static String validateotpUrl = "https://2factor.in/API/V1/%s/SMS/VERIFY/%s/%s";
-    public static String API_KEY = "849f54db-e53b-11ea-9fa5-0200cd936042";
+    public static String API_KEY = "8faff822-efa6-11ea-9fa5-0200cd936042";
 
     @Autowired
     private TokenRepository tokenRepository;
@@ -52,6 +52,7 @@ public class AuthController {
     @GetMapping(value = "/validateotp/{otp}/{mobileNum}")
     public ResponseEntity validateOtp(@PathVariable String otp, @PathVariable String mobileNum) throws Exception{
         Optional<Token> token = tokenRepository.findById(mobileNum);
+        System.out.println(token.toString());
         if(!token.isPresent()) {
             return ResponseEntity.notFound().build();
         }

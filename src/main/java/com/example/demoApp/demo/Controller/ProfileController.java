@@ -18,7 +18,7 @@ public class ProfileController {
     @PostMapping(value = "/profileUpdate", consumes = "application/json")
     public ResponseEntity profileUpdate(@RequestBody Profile profile) {
         profileRepository.save(profile);
-        return ResponseEntity.ok("added a new profile");
+        return ResponseEntity.ok("{added a new profile}");
     }
 
     @GetMapping(value = "/profileUpdate/{mobileNum}", consumes = "application/json")

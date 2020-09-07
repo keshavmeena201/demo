@@ -2,13 +2,13 @@ package com.example.demoApp.demo.Controller;
 
 import com.example.demoApp.demo.Repositories.BillRepositories;
 import com.example.demoApp.demo.dao.Bill;
+import com.google.gson.Gson;
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 public class BillController {
@@ -34,6 +34,17 @@ public class BillController {
     public List<Bill> getToBill(@RequestParam String toMobileNumber) {
         List<Bill> bills = billRepositories.findByToMobileNumber(toMobileNumber);
         return bills;
+    }
+
+    @GetMapping(path = "/getallTransactions/{frommobileNumber}")
+    public ResponseEntity<List<Bill>> getTransactions(@PathVariable String frommobileNumber) {
+        List<Bill> bills = billRepositories.findByFromMobileNumber(frommobileNumber);
+        List<Bill> bills1 = billRepositories.findByToMobileNumber(frommobileNumber);
+        bills.addAll(bills1);
+        System.out.println(bills);
+        Gson gson = new Gson();
+        System.out.print(ResponseEntity.ok(bills).getBody().toString());
+        return ResponseEntity.ok(bills);
     }
 
 //    @PostMapping(value = "/update", consumes = "application/json")
