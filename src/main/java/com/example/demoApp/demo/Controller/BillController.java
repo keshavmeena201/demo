@@ -24,14 +24,31 @@ public class BillController {
         return ResponseEntity.ok("Saved");
     }
 
+    @PostMapping(path = "/settleUp")
+    public ResponseEntity settleUp(@RequestBody Bill bill) {
+        Gson gson = new Gson();
+        System.out.println(gson.toJson(bill));
+        Optional<Bill> bill1 = billRepositories.findById(bill.getTransactionId());
+        if(bill.isSettled()){
+            bill1.get().setSettled(true);
+        }
+        if(bill.isPartial()) {
+            bill1.get().setPartial(true);
+            bill1.get().setAmountPaid(bill.getAmountPaid());
+        }
+        new BillUpdate().callUpdate(bill);
+        billRepositories.save(bill1.get());
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping(path = "/getfromBill/{frommobileNumber}")
-    public List<Bill> getfromBill(@RequestParam String frommobileNumber) {
+    public List<Bill> getfromBill(@PathVariable String frommobileNumber) {
         List<Bill> bills = billRepositories.findByFromMobileNumber(frommobileNumber);
         return bills;
     }
 
     @GetMapping(path = "/gettoBill/{tomobileNumber}")
-    public List<Bill> getToBill(@RequestParam String toMobileNumber) {
+    public List<Bill> getToBill(@PathVariable String toMobileNumber) {
         List<Bill> bills = billRepositories.findByToMobileNumber(toMobileNumber);
         return bills;
     }

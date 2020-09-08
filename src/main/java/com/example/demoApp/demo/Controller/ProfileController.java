@@ -31,9 +31,9 @@ public class ProfileController {
         return ResponseEntity.ok("{added a new profile}");
     }
 
-    @GetMapping(value = "/getProfile/{mobileNum}", consumes = "application/json")
-    public Profile profileUpdate(@PathVariable String mobileNum) {
-        return profileRepository.findById(mobileNum).get();
+    @GetMapping(value = "/getProfile/{mobileNum}")
+    public ResponseEntity profileUpdate(@PathVariable String mobileNum) {
+        return ResponseEntity.ok(profileRepository.findById(mobileNum).get());
     }
 
     @GetMapping(value = "/getScore/{mobileNumber}")
