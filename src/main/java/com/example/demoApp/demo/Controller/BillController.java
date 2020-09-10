@@ -20,8 +20,14 @@ public class BillController {
     public ResponseEntity addBill(@RequestBody Bill bill) {
         //to do : add validation
         bill.setTransactionDate(new Date());
+        bill.setToMobileNumber(getMobileNumber(bill.getFromMobileNumber()));
         billRepositories.save(bill);
-        return ResponseEntity.ok("Saved");
+        com.example.demoApp.demo.dao.Response response = com.example.demoApp.demo.dao.Response.builder().message("saved").build();
+
+        return ResponseEntity.ok(response);
+    }
+    public String  getMobileNumber(String mobileNumber) {
+        return mobileNumber.replace("+91","").replace(" ","");
     }
 
     @PostMapping(path = "/settleUp")
@@ -36,9 +42,10 @@ public class BillController {
             bill1.get().setPartial(true);
             bill1.get().setAmountPaid(bill.getAmountPaid());
         }
-        new BillUpdate().callUpdate(bill);
+        //new BillUpdate().callUpdate(bill);
         billRepositories.save(bill1.get());
-        return ResponseEntity.ok().build();
+        com.example.demoApp.demo.dao.Response response = com.example.demoApp.demo.dao.Response.builder().message("settled").build();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping(path = "/getfromBill/{frommobileNumber}")

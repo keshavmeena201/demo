@@ -2,6 +2,7 @@ package com.example.demoApp.demo.dao;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -12,6 +13,8 @@ import java.util.Date;
 //@IdClass(CompositeKey.class)
 public class Bill {
     @Id
+    @GeneratedValue(generator = "uuid")
+    @GenericGenerator(name = "uuid", strategy = "uuid2")
     private String transactionId;
 
     private String fromMobileNumber;

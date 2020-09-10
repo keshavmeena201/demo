@@ -22,7 +22,7 @@ public class AuthController {
 
     public static String otpUrl = "https://2factor.in/API/V1/%s/SMS/+91%s/AUTOGEN";
     public static String validateotpUrl = "https://2factor.in/API/V1/%s/SMS/VERIFY/%s/%s";
-    public static String API_KEY = "8faff822-efa6-11ea-9fa5-0200cd936042";
+    public static String API_KEY = "c8ca0227-f1ac-11ea-9fa5-0200cd936042";
 
     @Autowired
     private TokenRepository tokenRepository;
@@ -46,7 +46,8 @@ public class AuthController {
         token.setToken(jsonObject.get("Details").getAsString());
         token.setMobileNo(tokenRequestDao.getPhoneNumber().toString());
         tokenRepository.save(token);
-        return ResponseEntity.ok("OTP Sent");
+        com.example.demoApp.demo.dao.Response response1 = com.example.demoApp.demo.dao.Response.builder().message("OTP SENT").build();
+        return ResponseEntity.ok(response1);
     }
 
     @GetMapping(value = "/validateotp/{otp}/{mobileNum}")
@@ -69,7 +70,8 @@ public class AuthController {
         } else {
             return ResponseEntity.status(404).body("wrong otp");
         }
-        return ResponseEntity.ok("validated");
+        com.example.demoApp.demo.dao.Response response1 = com.example.demoApp.demo.dao.Response.builder().message("validated").build();
+        return ResponseEntity.ok(response1);
     }
 
     @GetMapping(value = "/store")

@@ -21,7 +21,7 @@ public class ProfileController {
         if(profile1.isPresent()){
             profile1.get().setOrgName(profile.getOrgName());
             profileRepository.save(profile1.get());
-        }else {
+        } else {
             profile.setCreditScore(600);
             profile.setAmountToGive(0);
             profile.setAmountToPay(0);
