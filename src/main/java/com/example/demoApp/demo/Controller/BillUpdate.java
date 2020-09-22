@@ -7,6 +7,7 @@ import com.example.demoApp.demo.Repositories.BillRepositories;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @RestController
+@Component
 public class BillUpdate {
 
     @Autowired
@@ -24,7 +26,6 @@ public class BillUpdate {
     private ProfileRepository profileRepo;
 
     public double updateScore (String mobileNumber, double scoreChange) {
-//        System.out.print(mobileNumber);
         Optional<Profile> currentProfile = profileRepo.findById(mobileNumber);
         double currentScore = currentProfile.get().getCreditScore();
         currentProfile.get().setCreditScore(currentScore + scoreChange);
@@ -77,13 +78,13 @@ public class BillUpdate {
         scoreTable.put(100000,30);
         scoreTable.put(500000,50);
 
-        double currentCreditScore = profileRepo.findById(bill.getFromMobileNumber()).get().getCreditScore(); // need to have the column in individual profile table
+        double currentCreditScore = profileRepo.findById(bill.getToMobileNumber()).get().getCreditScore(); // need to have the column in individual profile table
 
         Integer normalizedAmount = getAmount(bill.getAmountPaid());
         Integer creditChange = scoreTable.get(normalizedAmount);
         double normalizedChange = (getCreditChange(creditChange, (int) currentCreditScore, bill.getTransactionNumber()));
 
-        return updateScore(bill.getFromMobileNumber(), normalizedChange);
+        return updateScore(bill.getToMobileNumber(), (int) normalizedChange);
         // update db by creditScore + normalizedChange
     }
 
@@ -157,7 +158,7 @@ public class BillUpdate {
         Integer creditChange = scoreTable.get(normalizedAmount);
         double normalizedChange = (getCreditChange2(creditChange, normalizedAmount, diffDate));
 
-        return updateScore(bill.getFromMobileNumber(), normalizedChange);
+        return updateScore(bill.getFromMobileNumber(),(int) normalizedChange);
     }
 
     double getCreditChange3 (Integer creditChange, int transactionNumber, double oldRatio, double newRatio, boolean isSettled) {
@@ -179,7 +180,7 @@ public class BillUpdate {
         scoreTable.put(100000,30);
         scoreTable.put(500000,50);
 
-        double currentCreditScore = profileRepo.findById(bill.getFromMobileNumber()).get().getCreditScore();
+        //double currentCreditScore = profileRepo.findById(bill.getToMobileNumber()).get().getCreditScore();
         double newRatio = 1.0*bill.getAmountPaid()/bill.getPrincipleAmount();
         if(bill.getTransactionNumber() == 0) {
             bill.setOldRatio(newRatio);
@@ -190,7 +191,7 @@ public class BillUpdate {
         double normalizedChange;
         normalizedChange = (getCreditChange3(creditChange, bill.getTransactionNumber(), bill.getOldRatio(), newRatio, bill.isSettled()));
         System.out.print(normalizedChange);
-        return updateScore(bill.getFromMobileNumber(), normalizedChange);
+        return updateScore(bill.getToMobileNumber(), (int)normalizedChange);
         // update db by creditScore + normalizedChange
     }
 
@@ -198,14 +199,15 @@ public class BillUpdate {
 //        System.out.print("yes");
         int checkDate = bill.getTransactionDueDate().compareTo(bill.getTransactionDate());
 //        System.out.print(bill.isSettled());
-        if (bill.isSettled() && checkDate == 0) {
+        System.out.println(checkDate);
+        if (bill.isSettled()) {
             System.out.print("no");
             return paidDueDate(bill);
         }
-        else if (bill.isSettled() && bill.getTransactionDate() != bill.getTransactionDueDate()) {
-            System.out.print("yesno");
-            return paidPostDueDate(bill);
-        }
+//        else if (bill.isSettled() && bill.getTransactionDate() != bill.getTransactionDueDate()) {
+//            System.out.print("yesno");
+//            return paidPostDueDate(bill);
+//        }
         else if (bill.isPartial()) {
             return paidPartial(bill);
         }
@@ -214,7 +216,7 @@ public class BillUpdate {
     @PostMapping (path = "/updateBill", consumes = "application/json")
     public ResponseEntity updateBillData (@RequestBody Bill billData) {
 //        System.out.print(billData);
-        billRepo.save(billData);
+       // billRepo.save(billData);
         //double finalScore = callUpdate(billData);
         return ResponseEntity.ok("finalScore");
     }

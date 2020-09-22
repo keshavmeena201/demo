@@ -27,7 +27,6 @@ public class ProfileController {
             profile.setAmountToPay(0);
             profileRepository.save(profile);
         }
-
         return ResponseEntity.ok("{added a new profile}");
     }
 
@@ -44,6 +43,18 @@ public class ProfileController {
     @GetMapping(value = "/getAllProfiles")
     public ResponseEntity getAllProfiles() {
         List<Profile> allProfiles = (List<Profile>) profileRepository.findAll();
+        System.out.println(allProfiles.size());
         return ResponseEntity.ok(allProfiles);
+    }
+
+    @GetMapping(value = "/change")
+    public ResponseEntity change() {
+        List<Profile> allProfiles = (List<Profile>) profileRepository.findAll();
+        for(Profile profile : allProfiles) {
+            profile.setAmountToPay(0);
+            profile.setAmountToGive(0);
+        }
+        profileRepository.saveAll(allProfiles);
+        return ResponseEntity.ok("");
     }
 }

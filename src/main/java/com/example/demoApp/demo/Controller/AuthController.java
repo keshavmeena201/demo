@@ -18,7 +18,6 @@ import java.util.Optional;
 
 @RestController
 public class AuthController {
-    // auth/otp
 
     public static String otpUrl = "https://2factor.in/API/V1/%s/SMS/+91%s/AUTOGEN";
     public static String validateotpUrl = "https://2factor.in/API/V1/%s/SMS/VERIFY/%s/%s";

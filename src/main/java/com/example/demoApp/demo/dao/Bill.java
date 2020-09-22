@@ -10,13 +10,11 @@ import java.util.Date;
 @Entity
 @Getter
 @Setter
-//@IdClass(CompositeKey.class)
 public class Bill {
     @Id
     @GeneratedValue(generator = "uuid")
     @GenericGenerator(name = "uuid", strategy = "uuid2")
     private String transactionId;
-
     private String fromMobileNumber;
     private String toMobileNumber;
     private Date transactionDueDate;
@@ -31,5 +29,8 @@ public class Bill {
     private boolean scoreUpdated;
     private int transactionNumber;
     private String previousTransactionId;
+    private String fromName;
+    private String toName;
+    private boolean transactionType;
 
 }
